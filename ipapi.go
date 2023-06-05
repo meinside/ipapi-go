@@ -12,6 +12,10 @@ import (
 //
 // https://ipapi.co/api/#complete-location
 type Response struct {
+	Error   bool   `json:"error,omitempty"`
+	Reason  string `json:"reason,omitempty"`
+	Message string `json:"message,omitempty"`
+
 	IP                 string  `json:"ip"`
 	Version            string  `json:"version"`
 	City               string  `json:"city"`
@@ -43,6 +47,8 @@ type Response struct {
 }
 
 // GetLocation from ipapi.com with given ip address.
+//
+// https://ipapi.co/api/#complete-location
 func GetLocation(ip string) (response Response, err error) {
 	httpClient := &http.Client{
 		Transport: &http.Transport{
@@ -67,6 +73,9 @@ func GetLocation(ip string) (response Response, err error) {
 		if err == nil {
 			defer resp.Body.Close()
 			if err = json.NewDecoder(resp.Body).Decode(&response); err == nil {
+				if response.Error {
+					return Response{}, fmt.Errorf("HTTP %d %s: %s", resp.StatusCode, response.Reason, response.Message)
+				}
 				return response, nil
 			}
 		}
